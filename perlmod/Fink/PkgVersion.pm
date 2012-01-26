@@ -52,11 +52,13 @@ use Fink::Text::ParseWords qw(&parse_line);
 use Fink::Checksum;
 
 use Fink::Core::DebVersion;
+use Fink::Core::Package;
 
 use POSIX qw(uname strftime);
 use Hash::Util;
 use File::Basename qw(&dirname &basename);
 use Carp qw(confess);
+use File::Spec;
 use File::Temp qw(tempdir);
 use Fcntl;
 use Storable;
@@ -236,7 +238,7 @@ Get the minimum fields necessary for inserting a PkgVersion.
 
 {
 	# Fields required to add a package to $packages
-	my @keepfields = qw(_name _deb_version _epoch _version _revision _filename
+	my @keepfields = qw(_name _deb_package _epoch _version _revision _filename
 		_pkglist_provides essential _full_trees);
 
 	sub get_init_fields {
@@ -509,7 +511,7 @@ sub initialize {
 	my $self = shift;
 	my %options = (info_level => 1, filename => "", @_);
 
-	my ($pkgname, $deb_version, $epoch, $version, $revision, $fullname);
+	my ($pkgname, $deb_package, $epoch, $version, $revision, $fullname);
 	my ($source, $type_hash);
 	my ($depspec, $deplist, $dep, $expand, $destdir);
 	my ($parentpkgname, $parentdestdir, $parentinvname);
@@ -1447,7 +1449,7 @@ sub is_bootstrapping {
 
 =item get_name
 
-=item get_deb_version
+=item get_deb_package
 
 =item get_version
 
@@ -1463,16 +1465,22 @@ if the field is missing from the package).
 
 sub get_name {
 	my $self = shift;
-	return $self->{_name};
+	return $self->get_deb_package->name;
 }
 
 
 sub get_deb_version {
 	my $self = shift;
-	if (not exists $self->{_deb_version}) {
-		$self->{_deb_version} = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
+	return $self->get_deb_package->version;
+}
+
+sub get_deb_package {
+	my $self = shift;
+	if (not exists $self->{_deb_package}) {
+		my $version = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
+		$self->{_deb_package} = Fink::Core::Package->new($self->{_name}, $version, $config->param('Debarch'));
 	}
-	return $self->{_deb_version};
+	return $self->{_deb_package};
 }
 
 sub get_version {
@@ -1512,11 +1520,7 @@ sub get_fullversion {
 
 sub get_fullname {
 	my $self = shift;
-	exists $self->{_fullname} or $self->{_fullname} = sprintf '%s-%s-%s',
-		$self->get_name(),
-		$self->get_version(),
-		$self->get_revision();
-	return $self->{_fullname};
+	return $self->get_deb_package->canonical_name;
 }
 
 =item get_filename
@@ -1561,12 +1565,7 @@ the full path, composed of the debpath and debfile.
 
 sub get_debname {
 	my $self = shift;
-	exists $self->{_debname} or $self->{_debname} = sprintf '%s_%s-%s_%s.deb',
-		$self->get_name(),
-		$self->get_version(),
-		$self->get_revision(),
-		$config->param('Debarch');
-	return $self->{_debname};
+	return $self->get_deb_package->deb_name;
 }
 
 sub get_debpath {
@@ -1580,7 +1579,7 @@ sub get_debpath {
 
 sub get_debfile {
 	my $self = shift;
-	return $self->get_debpath() . '/' . $self->get_debname();
+	return File::Spec->catfile($self->get_debpath, $self->get_debname);
 }
 
 ### Do not change API! This is used by FinkCommander (fpkg_list.pl)
@@ -1720,7 +1719,7 @@ sub get_patchfile_suffixes {
 		@params = grep { defined $self->param("PatchFile$_") } @params;
 		unshift @params, "" if ($self->has_param('PatchFile'));
 		for my $param (@params) {
-			$self->{'_expand'}->{'PatchFile' . $param} = $self->{_patchpath} . '/' . $self->param('PatchFile' . $param);
+			$self->{'_expand'}->{'PatchFile' . $param} = File::Spec->catfile($self->{_patchpath}, $self->param('PatchFile' . $param));
 		}
 		$self->{_patchfile_suffixes} = \@params;
 	}
@@ -1810,8 +1809,7 @@ sub get_build_directory {
 		$self->{_builddir} = $self->get_fullname();
 	}
 	elsif ($self->has_param("SourceDirectory")) {
-		$self->{_builddir} = $self->get_fullname()."/".
-			$self->param_expanded("SourceDirectory");
+		$self->{_builddir} = File::Spec->catdir($self->get_fullname(), $self->param_expanded("SourceDirectory"));
 	}
 	else {
 		$dir = $self->get_tarball(); # never undef b/c never get here if no source
@@ -1822,7 +1820,7 @@ sub get_build_directory {
 			$dir = $1;
 		}
 
-		$self->{_builddir} = $self->get_fullname()."/".$dir;
+		$self->{_builddir} = File::Spec->catdir($self->get_fullname(), $dir);
 	}
 
 	$self->{_expand}->{b} = "$buildpath/".$self->{_builddir};
@@ -2388,8 +2386,8 @@ sub is_present {
 sub is_installed {
 	my $self = shift;
 
-	if ((&version_cmp(Fink::Status->query_package($self->{_name}), '=', $self->get_fullversion())) or
-	   (&version_cmp(Fink::VirtPackage->query_package($self->{_name}), '=', $self->get_fullversion()))) {
+	if ((&version_cmp(Fink::Status->query_package($self->get_name), '=', $self->get_fullversion)) or
+	   (&version_cmp(Fink::VirtPackage->query_package($self->get_name), '=', $self->get_fullversion))) {
 		return 1;
 	}
 	return 0;
@@ -2644,9 +2642,9 @@ sub resolve_depends {
 				# exception: if we were called by a splitoff to determine the "meta
 				# dependencies" of it, then we again filter out all splitoffs.
 				# If you've read till here without mental injuries, congrats :-)
-				next SPECLOOP if ($depname eq $self->{_name});
+				next SPECLOOP if ($depname eq $self->get_name);
 				foreach	 $splitoff ($self->parent_splitoffs) {
-					next SPECLOOP if ($depname eq $splitoff->get_name());
+					next SPECLOOP if ($depname eq $splitoff->get_name);
 				}
 			}
 
@@ -3511,7 +3509,7 @@ GCC_MSG
 		if ($suffix ne "") {	# Primary sources have no special extract dir
 			my $extractparam = "Source".$suffix."ExtractDir";
 			if ($self->has_param($extractparam)) {
-				$destdir .= "/".$self->param_expanded($extractparam);
+				$destdir = File::Spec->catdir($destdir, $self->param_expanded($extractparam));
 			}
 		}
 
@@ -4414,7 +4412,7 @@ EOF
 	my $debpath = $self->get_debpath();
 	my $distribution = $config->param("Distribution");
 	$debpath =~ s/$basepath\/fink\//..\//;
-	unless (symlink_f $debpath."/".$self->get_debname(), "$basepath/fink/debs/".$self->get_debname()) {
+	unless (symlink_f File::Spec->catfile($debpath, $self->get_debname()), File::Spec->catfile($basepath, 'fink', 'debs', $self->get_debname())) {
 		my $error = "can't symlink package ".$self->get_debname()." into pool directory";
 		$notifier->notify(event => 'finkPackageBuildFailed', description => $error);
 		die $error . "\n";

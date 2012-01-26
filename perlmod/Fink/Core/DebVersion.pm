@@ -93,7 +93,7 @@ sub _compare_to {
 __END__
 =head1 AUTHOR
 
-Benjamin Reed, E<lt>ranger@opennms.orgE<gt>
+Benjamin Reed, E<lt>rangerrick@users.sourceforge.netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
