@@ -200,11 +200,13 @@ Returns a string representation of the "canonical name" of the package, eg:
 
 	opennms-1.0-1
 
+Note that for historical reasons, the canonical name does *not* include the epoch.
+
 =cut
 
 sub canonical_name {
 	my $self = shift;
-	return sprintf('%s-%s', $self->name, $self->version->display_version);
+	return sprintf('%s-%s-%s', $self->name, $self->version->version, $self->version->revision);
 }
 
 =head2 * deb_name
