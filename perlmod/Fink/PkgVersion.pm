@@ -1478,7 +1478,7 @@ sub get_deb_package {
 	my $self = shift;
 	if (not exists $self->{_deb_package}) {
 		my $version = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
-		$self->{_deb_package} = Fink::Core::Package->new($self->{_name}, $version, $config->param('Debarch'));
+		$self->{_deb_package} = Fink::Core::Package->new($self->{_name}, $version);
 	}
 	return $self->{_deb_package};
 }
@@ -1565,7 +1565,12 @@ the full path, composed of the debpath and debfile.
 
 sub get_debname {
 	my $self = shift;
-	return $self->get_deb_package->deb_name;
+	return sprintf('%s_%s-%s_%s.deb',
+		$self->get_name,
+		$self->get_version,
+		$self->get_revision,
+		$config->param('Debarch')
+	);
 }
 
 sub get_debpath {

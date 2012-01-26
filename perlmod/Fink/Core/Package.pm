@@ -9,6 +9,8 @@ use File::Basename;
 use File::Copy qw();
 use Expect;
 
+# hack!
+use Fink::Config qw($config);
 use Fink::Core::Version;
 
 =head1 NAME
@@ -19,8 +21,8 @@ Fink::Core::Package - Perl extension for manipulating packages
 
   use Fink::Core::Package;
 
-  by $package_a = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('1.0', '1'), 'amd64')
-  by $package_b = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('2.0', '1'), 'amd64')
+  by $package_a = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('1.0', '1'))
+  by $package_b = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('2.0', '1'))
   if ($package_b->is_newer_than($package_b)) {
     print "yeah!\n";
   }
@@ -36,9 +38,9 @@ our $VERSION = '1.0';
 
 =head1 CONSTRUCTOR
 
-Fink::Core::Package->new($name, $version, $arch)
+Fink::Core::Package->new($name, $version)
 
-Given a name, Fink::Core::Version, and architecture, create a new Fink::Core::Package object.
+Given a name and Fink::Core::Version, create a new Fink::Core::Package object.
 
 =cut
 
@@ -49,16 +51,14 @@ sub new {
 
 	my $name    = shift;
 	my $version = shift;
-	my $arch    = shift;
 
-	if (not defined $arch) {
-		carp "You must provide a name, a Fink::Core::Version object, and an architecture!";
+	if (not defined $version) {
+		carp "You must provide a name and a Fink::Core::Version object!";
 		return undef;
 	}
 
 	$self->{NAME}    = $name;
 	$self->{VERSION} = $version;
-	$self->{ARCH}    = $arch;
 
 	return bless($self, $class);
 }
@@ -87,17 +87,6 @@ sub version {
 	return $self->{VERSION};
 }
 
-=head2 * arch
-
-The package arch, as an Fink::Core::Version object.
-
-=cut
-
-sub arch {
-	my $self = shift;
-	return $self->{ARCH};
-}
-
 =head2 * compare_to($package)
 
 Given a package, performs a cmp-style comparison on the packages' name and version, for
@@ -121,13 +110,7 @@ sub compare_to {
 	my $thisversion = $this->version;
 	my $thatversion = $that->version;
 
-	my $ret = $thisversion->compare_to($thatversion);
-
-	if ($ret == 0 and $this->arch ne $that->arch) {
-		return $this->arch cmp $that->arch;
-	}
-
-	return $ret;
+	return $thisversion->compare_to($thatversion);
 }
 
 =head2 * equals($package)
@@ -157,9 +140,6 @@ sub is_newer_than {
 	if ($this->name ne $that->name) {
 		croak "You can't compare 2 different package names with is_newer_than! (" . $this->name . " != " . $that->name .")";
 	}
-	if ($this->arch ne $that->arch) {
-		croak "You can't compare 2 different package architectures with is_newer_than! (" . $this->to_string . " != " . $that->to_string .")";
-	}
 	return int($this->compare_to($that) == 1);
 }
 
@@ -176,9 +156,6 @@ sub is_older_than {
 
 	if ($this->name ne $that->name) {
 		croak "You can't compare 2 different package names with is_older_than! (" . $this->name . " != " . $that->name .")";
-	}
-	if ($this->arch ne $that->arch) {
-		croak "You can't compare 2 different package architectures with is_older_than! (" . $this->to_string . " != " . $that->to_string .")";
 	}
 	return int($this->compare_to($that) == -1);
 }
@@ -209,19 +186,6 @@ sub canonical_name {
 	return sprintf('%s-%s-%s', $self->name, $self->version->version, $self->version->revision);
 }
 
-=head2 * deb_name
-
-Returns a string representation of the name of this package as a debian file, eg:
-
-	opennms_1.0-1_darwin-x86_64.deb
-
-=cut
-
-sub deb_name {
-	my $self = shift;
-
-	return sprintf('%s_%s_%s.deb', $self->name, $self->version->display_version, $self->arch);
-}
 
 1;
 __END__
