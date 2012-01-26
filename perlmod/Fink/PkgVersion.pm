@@ -51,6 +51,8 @@ use Fink::Text::DelimMatch;
 use Fink::Text::ParseWords qw(&parse_line);
 use Fink::Checksum;
 
+use Fink::Core::DebVersion;
+
 use POSIX qw(uname strftime);
 use Hash::Util;
 use File::Basename qw(&dirname &basename);
@@ -59,6 +61,7 @@ use File::Temp qw(tempdir);
 use Fcntl;
 use Storable;
 use IO::Handle;
+use Data::Dumper;
 
 use strict;
 use warnings;
@@ -233,7 +236,7 @@ Get the minimum fields necessary for inserting a PkgVersion.
 
 {
 	# Fields required to add a package to $packages
-	my @keepfields = qw(_name _epoch _version _revision _filename
+	my @keepfields = qw(_name _deb_version _epoch _version _revision _filename
 		_pkglist_provides essential _full_trees);
 
 	sub get_init_fields {
@@ -359,6 +362,8 @@ sub pkgversions_from_properties {
 	# create object for this particular version
 	my $pkgversion = $class->new_from_properties($properties, %options);
 	return () unless exists $pkgversion->{package};  # trap instantiation failures
+
+	#print Dumper($pkgversion), "\n";
 
 	# Handle Architecture and Distribution fields. We should do this before
 	# instantiating the PV objects, but that would mean having to
@@ -504,7 +509,7 @@ sub initialize {
 	my $self = shift;
 	my %options = (info_level => 1, filename => "", @_);
 
-	my ($pkgname, $epoch, $version, $revision, $fullname);
+	my ($pkgname, $deb_version, $epoch, $version, $revision, $fullname);
 	my ($source, $type_hash);
 	my ($depspec, $deplist, $dep, $expand, $destdir);
 	my ($parentpkgname, $parentdestdir, $parentinvname);
@@ -652,10 +657,10 @@ sub initialize {
 	$expand = { %$expand,
 				'n' => $pkgname,
 				'ni'=> $self->param_default("_package_invariant", $pkgname),
-				'e' => $epoch,
-				'v' => $version,
+				'e' => $self->get_epoch,
+				'v' => $self->get_version,
 				'V' => $self->get_fullversion,
-				'r' => $revision,
+				'r' => $self->get_revision,
 				'f' => $fullname,
 				'p' => $basepath,
 				'm' => $config->param('Architecture'),
@@ -1332,9 +1337,9 @@ sub add_splitoff {
 	}
 
 	# copy version information
-	$properties->{'version'}  = $self->{_version};
-	$properties->{'revision'} = $self->{_revision};
-	$properties->{'epoch'}    = $self->{_epoch};
+	$properties->{'version'}  = $self->get_version;
+	$properties->{'revision'} = $self->get_revision;
+	$properties->{'epoch'}    = $self->get_epoch;
 
 	# link the splitoff to its "parent" (=us)
 	$properties->{parent_obj} = $self;
@@ -1442,6 +1447,8 @@ sub is_bootstrapping {
 
 =item get_name
 
+=item get_deb_version
+
 =item get_version
 
 =item get_revision
@@ -1459,19 +1466,28 @@ sub get_name {
 	return $self->{_name};
 }
 
+
+sub get_deb_version {
+	my $self = shift;
+	if (not exists $self->{_deb_version}) {
+		$self->{_deb_version} = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
+	}
+	return $self->{_deb_version};
+}
+
 sub get_version {
 	my $self = shift;
-	return $self->{_version};
+	return $self->get_deb_version->version;
 }
 
 sub get_revision {
 	my $self = shift;
-	return $self->{_revision};
+	return $self->get_deb_version->revision;
 }
 
 sub get_epoch {
 	my $self = shift;
-	return $self->{_epoch};
+	return $self->get_deb_version->epoch;
 }
 
 =item get_fullversion
@@ -1487,11 +1503,10 @@ epoch.
 
 sub get_fullversion {
 	my $self = shift;
-	my $epoch = $self->get_epoch();
-	exists $self->{_fullversion} or $self->{_fullversion} = sprintf '%s%s-%s',
-		$epoch ? $epoch.':' : '',
-		$self->get_version(),
-		$self->get_revision();
+	if (not exists $self->{_fullversion}) {
+		$self->{_fullversion} = $self->get_deb_version->display_version;
+	}
+
 	return $self->{_fullversion};
 }
 
