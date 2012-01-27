@@ -4417,7 +4417,7 @@ EOF
 	my $debpath = $self->get_debpath();
 	my $distribution = $config->param("Distribution");
 	$debpath =~ s/$basepath\/fink\//..\//;
-	unless (symlink_f File::Spec->catfile($debpath, $self->get_debname()), File::Spec->catfile($basepath, 'fink', 'debs', $self->get_debname())) {
+	unless (symlink_f(File::Spec->catfile($debpath, $self->get_debname()), File::Spec->catfile($basepath, 'fink', 'debs', $self->get_debname()))) {
 		my $error = "can't symlink package ".$self->get_debname()." into pool directory";
 		$notifier->notify(event => 'finkPackageBuildFailed', description => $error);
 		die $error . "\n";
