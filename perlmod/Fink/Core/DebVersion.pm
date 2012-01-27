@@ -48,7 +48,7 @@ sub new {
 
 	if (not $DPKG_SEARCHED) {
 		$DPKG = find_executable('dpkg');
-		if (not defined $DPKG) {
+		if (not defined $DPKG and not $ENV{HARNESS_ACTIVE}) {
 			carp "Unable to locate \`dpkg\` executable: $! (if you are bootstrapping, this is normal)\n";
 		}
 		$DPKG_SEARCHED = 1;

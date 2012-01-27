@@ -44,6 +44,30 @@ sub new {
 
 =over 4
 
+=item detailed_description
+
+The detailed description of this package. Corresponds to the InfoFile "DescDetail" field.
+
+=cut
+
+sub detailed_description {
+	my $self = shift;
+	if (@_) { $self->{DETAILED_DESCRIPTION} = shift; }
+	return $self->{DETAILED_DESCRIPTION};
+}
+
+=item usage_description
+
+The description on how to use the package. Corresponds to the InfoFile "DescUsage" field.
+
+=cut
+
+sub usage_description {
+	my $self = shift;
+	if (@_) { $self->{USAGE_DESCRIPTION} = shift; }
+	return $self->{USAGE_DESCRIPTION};
+}
+
 =item type
 
 The Fink package 'type'.
@@ -54,6 +78,78 @@ sub type {
 	my $self = shift;
 	if (@_) { $self->{TYPE} = shift; }
 	return $self->{TYPE};
+}
+
+=item gcc_abi
+
+The compiler ABI that this package must conform to.
+
+=cut
+
+sub gcc_abi {
+	my $self = shift;
+	if (@_) { $self->{GCC_ABI} = shift; }
+	return $self->{GCC_ABI};
+}
+
+=item custom_mirror
+
+The custom mirror configuration (if any) for this package.
+
+=cut
+
+sub custom_mirror {
+	my $self = shift;
+	if (@_) { $self->{CUSTOM_MIRROR} = shift; }
+	return $self->{CUSTOM_MIRROR};
+}
+
+=item config_guess_dir
+
+The path in which to write config.guess and config.sub.  If empty, nothing is written.
+
+=cut
+
+sub config_guess_dir {
+	my $self = shift;
+	if (@_) { $self->{CONFIG_GUESS_DIR} = shift; }
+	return $self->{CONFIG_GUESS_DIR};
+}
+
+=item libtool_dir
+
+The path in which to write ltconfig and ltmain.sh. If empty, nothing is written.
+
+=cut
+
+sub libtool_dir {
+	my $self = shift;
+	if (@_) { $self->{LIBTOOL_DIR} = shift; }
+	return $self->{LIBTOOL_DIR};
+}
+
+=item po_makefile_dir
+
+The path in which to write po/Makefile.in.in. If empty, nothing is written.
+
+=cut
+
+sub po_makefile_dir {
+	my $self = shift;
+	if (@_) { $self->{PO_MAKEFILE_DIR} = shift; }
+	return $self->{PO_MAKEFILE_DIR};
+}
+
+=item update_pod
+
+Boolean. Whether or not to update Perl documentation inside the package.
+
+=cut
+
+sub update_pod {
+	my $self = shift;
+	if (@_) { $self->{UPDATE_POD} = shift; }
+	return $self->{UPDATE_POD};
 }
 
 =item configure_params
@@ -104,19 +200,115 @@ sub info_test {
 	return $self->{INFO_TEST};
 }
 
-=item sources
+=item sourcefiles
 
 The source files for this package.
 
 =cut
 
-sub sources {
+sub sourcefiles {
 	my $self = shift;
-	if (@_) { $self->{SOURCES} = shift; }
 	if (not exists $self->{SOURCES}) {
-		$self->{SOURCES} = Fink::Core::FileSet->new();
+		$self->{SOURCES} = Fink::Core::Set->new();
 	}
 	return $self->{SOURCES};
+}
+
+=item patchfiles
+
+The patch files for this package.
+
+=cut
+
+sub patchfiles {
+	my $self = shift;
+	if (not exists $self->{PATCHES}) {
+		$self->{PATCHES} = Fink::Core::Set->new();
+	}
+	return $self->{PATCHES};
+}
+
+=item runtime_variables
+
+A reference to a hash containing environment variables that should be set
+at runtime in the built package.
+
+=cut
+
+sub runtime_variables {
+	my $self = shift;
+	if (@_) { $self->{RUNTIME_VARIABLES} = shift; }
+	return $self->{RUNTIME_VARIABLES};
+}
+
+=item files
+
+The files that will be in the binary that results from this package.
+
+=cut
+
+sub files {
+	my $self = shift;
+	if (not exists $self->{FILES}) {
+		$self->{FILES} = Fink::Core::Set->new();
+	}
+	return $self->{FILES};
+}
+
+=item documentation_files
+
+The files that will be copied into the documentation directory in the binary
+that results from this package.
+
+=cut
+
+sub documentation_files {
+	my $self = shift;
+	if (not exists $self->{DOCUMENTATION_FILES}) {
+		$self->{DOCUMENTATION_FILES} = Fink::Core::Set->new();
+	}
+	return $self->{DOCUMENTATION_FILES};
+}
+
+=item app_bundles
+
+Application bundles that should be installed in the Applications folder in the
+Fink prefix.
+
+=cut
+
+sub app_bundles {
+	my $self = shift;
+	if (not exists $self->{APP_BUNDLES}) {
+		$self->{APP_BUNDLES} = Fink::Core::Set->new();
+	}
+	return $self->{APP_BUNDLES};
+}
+
+=item jar_files
+
+Java JAR files that should be installed in the fink Java share directory.
+
+=cut
+
+sub jar_files {
+	my $self = shift;
+	if (not exists $self->{JAR_FILES}) {
+		$self->{JAR_FILES} = Fink::Core::Set->new();
+	}
+	return $self->{JAR_FILES};
+}
+
+=item parent
+
+The parent (if any) of this package.
+
+=cut
+
+sub parent {
+	my $self = shift;
+	if (@_) { $self->{PARENT} = shift; }
+	return $self->{PARENT};
 }
 
 =item splitoffs

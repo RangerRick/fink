@@ -147,12 +147,16 @@ for p in \
 		Fink::Config		\
 		Fink::Configure		\
 		Fink::Core::DebVersion	\
+		Fink::Core::File	\
+		Fink::Core::PackageSet	\
+		Fink::Core::PatchFile	\
+		Fink::Core::Set	\
+		Fink::Core::SourceFile	\
+		Fink::Core::Util	\
+		Fink::Core::Version	\
 		Fink::Core::Package::Base	\
 		Fink::Core::Package::Deb	\
 		Fink::Core::Package::Info	\
-		Fink::Core::PackageSet	\
-		Fink::Core::Util	\
-		Fink::Core::Version	\
 		Fink::Engine		\
 		Fink::Finally		\
 		Fink::Finally::BuildConflicts	\

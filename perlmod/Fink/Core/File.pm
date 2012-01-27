@@ -4,6 +4,9 @@ use 5.008008;
 use strict;
 use warnings;
 
+use Carp;
+use Fink::Checksum::MD5;
+
 =head1 NAME
 
 Fink::Core::File - Perl extension for manipulating files
@@ -16,18 +19,18 @@ our $VERSION = '1.0';
 
 Fink::Core::File->new($field, $name, [$index])
 
-Given a field (Source, PatchFile, etc.), a file name and an optional index, create a new Fink::Core::File object.
+Given a field (Source, Patch, etc.), a file name and an optional index, create a new Fink::Core::File object.
 
 =cut
 
 sub new {
-	my $proto   = shift;
-	my $class   = ref($proto) || $proto;
-	my $self    = {};
+	my $proto	= shift;
+	my $class	= ref($proto) || $proto;
+	my $self	 = {};
 
-	my $field   = shift;
-	my $name    = shift;
-	my $index   = shift || 0;
+	my $field	= shift;
+	my $name	 = shift;
+	my $index	= shift || 0;
 
 	if (not defined $name) {
 		carp "You must provide a field and a file name!";
@@ -76,6 +79,29 @@ The file index, defaults to 0.
 sub index {
 	my $self = shift;
 	return $self->{INDEX};
+}
+
+=item expected_md5
+
+The expected MD5 of the file. Corresponds to the InfoFile "FieldN-MD5" field.
+
+=cut
+
+sub expected_md5 {
+	my $self = shift;
+	if (@_) { $self->{EXPECTED_MD5} = shift; }
+	return $self->{EXPECTED_MD5};
+}
+
+=item md5
+
+The MD5 of the file.
+	
+=cut
+
+sub md5 {
+	my $self = shift;
+	return Fink::Checksum::MD5->new()->get_checksum($self->name);
 }
 
 =item compare_to($file)

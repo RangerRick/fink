@@ -113,6 +113,44 @@ sub distribution {
 	return $self->{DISTRIBUTION};
 }
 
+=item build_depends_only
+
+Boolean. Whether or not this package should only be depended on at build time.
+
+=cut
+
+sub build_depends_only {
+	my $self = shift;
+	if (@_) { $self->{BUILD_DEPENDS_ONLY} = shift; }
+	return $self->{BUILD_DEPENDS_ONLY};
+}
+
+=item essential
+
+Boolean. Whether or not this package is considered essential.
+
+=cut
+
+sub essential {
+	my $self = shift;
+	if (@_) { $self->{ESSENTIAL} = shift; }
+	return $self->{ESSENTIAL};
+}
+
+=item provides
+
+Set of Fink::Core::Dependency objects representing 0 or more things this package provides.
+
+=cut
+
+sub provides {
+	my $self = shift;
+	if (not exists $self->{PROVIDES}) {
+		$self->{PROVIDES} = Fink::Core::Set->new();
+	}
+	return $self->{PROVIDES};
+}
+
 =item license
 
 The license(s) for this package.
