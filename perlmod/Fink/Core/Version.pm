@@ -59,7 +59,9 @@ sub new {
 
 =head1 METHODS
 
-=head2 * epoch
+=over 4
+
+=item epoch
 
 The epoch.  If no epoch is set, returns undef.
 
@@ -70,7 +72,7 @@ sub epoch {
 	return $self->{EPOCH};
 }
 
-=head2 * epoch_int
+=item epoch_int
 
 The epoch.  If no epoch is set, returns the default epoch, 0.
 
@@ -82,7 +84,7 @@ sub epoch_int() {
 	return $self->epoch;
 }
 
-=head2 * version
+=item version
 
 The version. This is generally the same as the version of the
 upstream software that was packaged.
@@ -94,7 +96,7 @@ sub version {
 	return $self->{VERSION};
 }
 
-=head2 * revision
+=item revision
 
 The revision. This is generally a number determined by the packager
 to track changes to the package, independent of version changes in the software
@@ -107,7 +109,7 @@ sub revision {
 	return $self->{REVISION};
 }
 
-=head2 * full_version
+=item full_version
 
 Returns the complete version string, in the form: C<epoch:version-revision>
 
@@ -118,7 +120,7 @@ sub full_version {
 	return sprintf('%i:%s-%s', $self->epoch_int, $self->version, $self->revision);
 }
 
-=head2 * display_version
+=item display_version
 
 Returns the complete version string, just like full_version, expect it excludes
 the epoch if there is no epoch in the version.
@@ -130,7 +132,7 @@ sub display_version {
 	return $self->epoch_int? $self->full_version : sprintf('%s-%s', $self->version, $self->revision);
 }
 
-=head2 * _compare_to($version)
+=item _compare_to($version)
 
 Given a version, performs a cmp-style comparison, for use in sorting.
 Must be implemented in subclasses.
@@ -183,7 +185,7 @@ sub _compare_version {
 	return 0;
 }
 
-=head2 * compare_to($version)
+=item compare_to($version)
 
 Given a version, performs a cmp-style comparison, for use in sorting. Catches by default,
 calling _compare_to for the actual implementation of comparison.
@@ -213,7 +215,7 @@ sub compare_to {
 	return $ret;
 }
 
-=head2 * equals($version)
+=item equals($version)
 
 Given a version object, returns true if both versions are the same.
 
@@ -226,7 +228,7 @@ sub equals($) {
 	return $self->compare_to($compareto) == 0;
 }
 
-=head2 * is_newer_than($version)
+=item is_newer_than($version)
 
 Given a version object, returns true if the current version is newer than the
 given version.
@@ -240,7 +242,7 @@ sub is_newer_than($) {
 	return $self->compare_to($compareto) == 1;
 }
 
-=head2 * is_older_than($version)
+=item is_older_than($version)
 
 Given a version object, returns true if the current version is older than the
 given version.
@@ -254,7 +256,7 @@ sub is_older_than($) {
 	return $self->compare_to($compareto) == -1;
 }
 
-=head2 * to_string
+=item to_string
 
 Returns a string representation of the version, suitable for printing.
 
@@ -275,6 +277,8 @@ sub stats {
 
 1;
 __END__
+=back
+
 =head1 AUTHOR
 
 Benjamin Reed, E<lt>rangerrick@users.sourceforge.netE<gt>

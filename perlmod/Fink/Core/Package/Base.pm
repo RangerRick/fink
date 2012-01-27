@@ -1,4 +1,4 @@
-package Fink::Core::Package;
+package Fink::Core::Package::Base;
 
 use 5.008008;
 use strict;
@@ -15,14 +15,14 @@ use Fink::Core::Version;
 
 =head1 NAME
 
-Fink::Core::Package - Perl extension for manipulating packages
+Fink::Core::Package::Base - Perl extension for manipulating packages
 
 =head1 SYNOPSIS
 
-  use Fink::Core::Package;
+  use Fink::Core::Package::Base;
 
-  by $package_a = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('1.0', '1'))
-  by $package_b = Fink::Core::Package->new('opennms', Fink::Core::DebVersion->new('2.0', '1'))
+  by $package_a = Fink::Core::Package::Base->new('opennms', Fink::Core::DebVersion->new('1.0', '1'))
+  by $package_b = Fink::Core::Package::Base->new('opennms', Fink::Core::DebVersion->new('2.0', '1'))
   if ($package_b->is_newer_than($package_b)) {
     print "yeah!\n";
   }
@@ -38,9 +38,9 @@ our $VERSION = '1.0';
 
 =head1 CONSTRUCTOR
 
-Fink::Core::Package->new($name, $version)
+Fink::Core::Package::Base->new($name, $version)
 
-Given a name and Fink::Core::Version, create a new Fink::Core::Package object.
+Given a name and Fink::Core::Version, create a new Fink::Core::Package::Base object.
 
 =cut
 
@@ -65,7 +65,9 @@ sub new {
 
 =head1 METHODS
 
-=head2 * name
+=over 4
+
+=item name
 
 The name of the package, i.e., "opennms".
 
@@ -76,7 +78,7 @@ sub name {
 	return $self->{NAME};
 }
 
-=head2 * version
+=item version
 
 The package version, as an Fink::Core::Version object.
 
@@ -87,7 +89,79 @@ sub version {
 	return $self->{VERSION};
 }
 
-=head2 * compare_to($package)
+=item architecture
+
+The architecture of this package.
+
+=cut
+
+sub architecture {
+	my $self = shift;
+	if (@_) { $self->{ARCHITECTURE} = shift; }
+	return $self->{ARCHITECTURE};
+}
+
+=item distribution
+
+The distribution of this package.
+
+=cut
+
+sub distribution {
+	my $self = shift;
+	if (@_) { $self->{DISTRIBUTION} = shift; }
+	return $self->{DISTRIBUTION};
+}
+
+=item license
+
+The license(s) for this package.
+
+=cut
+
+sub license {
+	my $self = shift;
+	if (@_) { $self->{LICENSE} = shift; }
+	return $self->{LICENSE};
+}
+
+=item description
+
+The description of this package.
+
+=cut
+
+sub description {
+	my $self = shift;
+	if (@_) { $self->{DESCRIPTION} = shift; }
+	return $self->{DESCRIPTION};
+}
+
+=item homepage
+
+The homepage for this package.
+
+=cut
+
+sub homepage {
+	my $self = shift;
+	if (@_) { $self->{HOMEPAGE} = shift; }
+	return $self->{HOMEPAGE};
+}
+
+=item maintainer
+
+The maintainer of this package.
+
+=cut
+
+sub maintainer {
+	my $self = shift;
+	if (@_) { $self->{MAINTAINER} = shift; }
+	return $self->{MAINTAINER};
+}
+
+=item compare_to($package)
 
 Given a package, performs a cmp-style comparison on the packages' name and version, for
 use in sorting.
@@ -113,7 +187,7 @@ sub compare_to {
 	return $thisversion->compare_to($thatversion);
 }
 
-=head2 * equals($package)
+=item equals($package)
 
 Given a package, returns true if both packages have the same name and version.
 
@@ -126,7 +200,7 @@ sub equals {
 	return int($this->compare_to($that) == 0);
 }
 
-=head2 * is_newer_than($package)
+=item is_newer_than($package)
 
 Given a package, returns true if the current package is newer than the
 given package, and they have the same name.
@@ -143,7 +217,7 @@ sub is_newer_than {
 	return int($this->compare_to($that) == 1);
 }
 
-=head2 * is_older_than($package)
+=item is_older_than($package)
 
 Given a package, returns true if the current package is older than the
 given package, and they have the same name.
@@ -160,7 +234,7 @@ sub is_older_than {
 	return int($this->compare_to($that) == -1);
 }
 
-=head2 * to_string
+=item to_string
 
 Returns a string representation of the package, suitable for printing.
 
@@ -171,7 +245,7 @@ sub to_string {
 	return $self->name . '-' . $self->version->full_version;
 }
 
-=head2 * canonical_name
+=item canonical_name
 
 Returns a string representation of the "canonical name" of the package, eg:
 
@@ -189,6 +263,8 @@ sub canonical_name {
 
 1;
 __END__
+=back
+
 =head1 AUTHOR
 
 Benjamin Reed, E<lt>rangerrick@users.sourceforge.netE<gt>

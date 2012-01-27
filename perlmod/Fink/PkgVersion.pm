@@ -51,8 +51,8 @@ use Fink::Text::DelimMatch;
 use Fink::Text::ParseWords qw(&parse_line);
 use Fink::Checksum;
 
+use Fink::Core::Package::Info;
 use Fink::Core::DebVersion;
-use Fink::Core::Package;
 
 use POSIX qw(uname strftime);
 use Hash::Util;
@@ -238,7 +238,7 @@ Get the minimum fields necessary for inserting a PkgVersion.
 
 {
 	# Fields required to add a package to $packages
-	my @keepfields = qw(_name _deb_package _epoch _version _revision _filename
+	my @keepfields = qw(_name _deb_version _epoch _version _revision _filename
 		_pkglist_provides essential _full_trees);
 
 	sub get_init_fields {
@@ -511,7 +511,7 @@ sub initialize {
 	my $self = shift;
 	my %options = (info_level => 1, filename => "", @_);
 
-	my ($pkgname, $deb_package, $epoch, $version, $revision, $fullname);
+	my ($pkgname, $deb_version, $epoch, $version, $revision, $fullname);
 	my ($source, $type_hash);
 	my ($depspec, $deplist, $dep, $expand, $destdir);
 	my ($parentpkgname, $parentdestdir, $parentinvname);
@@ -1449,7 +1449,7 @@ sub is_bootstrapping {
 
 =item get_name
 
-=item get_deb_package
+=item get_deb_version
 
 =item get_version
 
@@ -1465,22 +1465,17 @@ if the field is missing from the package).
 
 sub get_name {
 	my $self = shift;
-	return $self->get_deb_package->name;
+	return $self->{_name};
 }
 
 
 sub get_deb_version {
 	my $self = shift;
-	return $self->get_deb_package->version;
-}
 
-sub get_deb_package {
-	my $self = shift;
-	if (not exists $self->{_deb_package}) {
-		my $version = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
-		$self->{_deb_package} = Fink::Core::Package->new($self->{_name}, $version);
+	if (not exists $self->{_deb_version}) {
+		$self->{_deb_version} = Fink::Core::DebVersion->new($self->{_version}, $self->{_revision}, $self->{_epoch});
 	}
-	return $self->{_deb_package};
+	return $self->{_deb_version};
 }
 
 sub get_version {
@@ -1511,6 +1506,7 @@ epoch.
 
 sub get_fullversion {
 	my $self = shift;
+
 	if (not exists $self->{_fullversion}) {
 		$self->{_fullversion} = $self->get_deb_version->display_version;
 	}
@@ -1520,7 +1516,11 @@ sub get_fullversion {
 
 sub get_fullname {
 	my $self = shift;
-	return $self->get_deb_package->canonical_name;
+
+	if (not exists $self->{_fullname}) {
+		$self->{_fullname} = sprintf('%s-%s-%s', $self->get_name, $self->get_deb_version->version, $self->get_deb_version->revision);
+	}
+	return $self->{_fullname};
 }
 
 =item get_filename

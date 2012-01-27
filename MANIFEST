@@ -52,7 +52,10 @@ perlmod/Fink/Command.pm
 perlmod/Fink/Config.pm
 perlmod/Fink/Configure.pm
 perlmod/Fink/Core/DebVersion.pm
-perlmod/Fink/Core/Package.pm
+perlmod/Fink/Core/PackageSet.pm
+perlmod/Fink/Core/Package/Base.pm
+perlmod/Fink/Core/Package/Info.pm
+perlmod/Fink/Core/Package/Deb.pm
 perlmod/Fink/Core/Util.pm
 perlmod/Fink/Core/Version.pm
 perlmod/Fink/Engine.pm

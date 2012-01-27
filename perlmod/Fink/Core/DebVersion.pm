@@ -18,7 +18,6 @@ Fink::Core::DebVersion - Perl extension for manipulating Debian Versions
 
   use Fink::Core::DebVersion;
 
-
 =head1 DESCRIPTION
 
 This is just a perl module for manipulating Debian versions.
@@ -60,7 +59,9 @@ sub new {
 
 =head1 METHODS
 
-=head2 * _compare_to($version)
+=over 4
+
+=item _compare_to($version)
 
 Given a version, performs a cmp-style comparison, for use in sorting.
 
@@ -97,6 +98,8 @@ sub _compare_to {
 
 1;
 __END__
+=back
+
 =head1 AUTHOR
 
 Benjamin Reed, E<lt>rangerrick@users.sourceforge.netE<gt>
