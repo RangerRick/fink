@@ -80,7 +80,7 @@ done
 install -c -m 755 fink-dpkg-status-cleanup "$basepath/sbin/"
 
 # copy all perl modules
-for subdir in . Fink Fink/{Text,Notify,Checksum,Finally,SelfUpdate,Core,Package} ; do
+for subdir in . Fink Fink/{Text,Notify,Checksum,Finally,SelfUpdate,Core,Core/Package} ; do
   for file in perlmod/${subdir}/*.pm ; do
     if [ -f $file ]; then
       install -c -p -m 644 $file "$basepath/lib/perl5/$subdir"
