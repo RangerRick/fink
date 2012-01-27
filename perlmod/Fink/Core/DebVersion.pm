@@ -25,8 +25,9 @@ This is just a perl module for manipulating Debian versions.
 
 =cut
 
-our $VERSION = '1.0';
-our $DPKG    = undef;
+our $VERSION       = '1.0';
+our $DPKG          = undef;
+our $DPKG_SEARCHED = 0;
 
 =head1 CONSTRUCTOR
 
@@ -46,11 +47,12 @@ sub new {
 
 	my $self     = bless($class->SUPER::new($version, $revision, $epoch), $class);
 
-	if (not defined $DPKG) {
+	if (not $DPKG_SEARCHED) {
 		$DPKG = find_executable('dpkg');
 		if (not defined $DPKG) {
-			croak "Unable to locate \`dpkg\` executable: $!\n";
+			carp "Unable to locate \`dpkg\` executable: $! (if you are bootstrapping, this is normal)\n";
 		}
+		$DPKG_SEARCHED = 1;
 	}
 
 	return $self;
@@ -70,6 +72,10 @@ Given a version, performs a cmp-style comparison, for use in sorting.
 sub _compare_to {
 	my $this = shift;
 	my $that = shift;
+
+	if (not defined $DPKG) {
+		return $this->SUPER::compare_to($that);
+	}
 
 	my $thisversion = $this->full_version;
 	my $thatversion = $that->full_version;
