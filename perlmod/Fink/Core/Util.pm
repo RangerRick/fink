@@ -20,6 +20,8 @@ Fink::Core::Util - a collection of utility functions.
 =cut
 
 our @EXPORT_OK = qw(
+	boolean
+	ternary
 	find_executable
 	read_properties
 	slurp
@@ -35,6 +37,49 @@ our $VERSION = '1.0';
 =head1 METHODS
 
 =over 4
+
+=item boolean($value)
+
+Return 1 of 2 values:
+
+=over 2
+
+=item 1 (true) if passed "true", "yes", or 1, case-insensitively
+
+=item 0 (false) otherwise
+
+=back
+
+=cut
+
+sub boolean($) {
+	my $value = shift;
+	return (defined $value and $value =~ /^(true|yes|1)$/i) ? 1 : 0;
+}
+
+=item ternary($value)
+
+Returns 1 of 3 values:
+
+=over 2
+
+=item undef if passed undef
+
+=item 1 (true) if passed "true", "yes", or 1, case-insensitively
+
+=item 0 (false) otherwise
+
+=back
+
+=cut
+
+sub ternary($) {
+	my $value = shift;
+	return undef if (not defined $value);
+	return 1 if ($value =~ /^(true|yes|1)$/i);
+	return 0;
+}
+
 
 =item find_executable($exe)
 

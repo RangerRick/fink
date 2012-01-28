@@ -29,7 +29,9 @@ my $COMPARE_TO_CACHE = {};
 
 =head1 CONSTRUCTOR
 
-Fink::Core::Version->new($version, $revision, [$epoch])
+=over 2
+
+=item Fink::Core::Version->new($version, $revision, [$epoch])
 
 Given a version, revision, and epoch, create a version object.
 
@@ -43,6 +45,7 @@ sub new {
 	my $version  = shift;
 	my $revision = shift;
 	my $epoch    = shift;
+	$epoch       = undef if (defined $epoch and $epoch eq '');
 
 	if (not defined $version or not defined $revision) {
 		carp "You must pass at least a version and revision!";
@@ -55,6 +58,29 @@ sub new {
 
 	bless($self);
 	return $self;
+}
+
+=item Fink::Core::Version->new_from_string($version_string)
+
+Given a version string, return a Fink::Core::Version object.
+
+=cut
+
+sub new_from_string {
+	my $proto    = shift;
+	my $class    = ref($proto) || $proto;
+
+	my $version_string = shift || croak "Can't create a version object from an undefined string!";
+	$version_string =~ s/^\s*(.*?)\s*$/$1/;
+
+	my ($version, $revision) = split(/-/, $version_string);
+	$revision = 0 unless (defined $revision);
+	my $epoch = undef;
+	if ($version =~ /^(\d+)\:(\S+)$/) {
+		($epoch, $version) = ($1, $2);
+	}
+
+	return $class->new($version, $revision, $epoch);
 }
 
 =head1 METHODS

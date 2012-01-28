@@ -19,7 +19,9 @@ our $VERSION = '1.0';
 
 =head1 CONSTRUCTOR
 
-Fink::Core::Package::Info->new($name, $version)
+=over 2
+
+=item Fink::Core::Package::Info->new($name, $version)
 
 Given a name and Fink::Core::Version, create a new Fink::Core::Package::Info object.
 
@@ -39,6 +41,66 @@ sub new {
 
 	my $self = bless($class->SUPER::new($name, $version), $class);
 }
+
+=item Fink::Core::Package::Info->new_from_hash($hash_ref)
+
+Given a properties-list-style hash (from PkgVersion), initialize a new Fink::Core::Package::Info package.
+
+=cut
+
+sub new_from_hash {
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
+	my $hash  = shift;
+
+	if (not defined $hash) {
+		carp "You must provide a hash!";
+		return undef;
+	}
+
+	my $self  = bless($class->SUPER::new_from_hash($hash), $class);
+
+	$self->detailed_description($hash->{descdetail});
+	$self->usage_description($hash->{descusage});
+	$self->type($hash->{type});
+	$self->gcc_abi($hash->{gcc});
+	$self->custom_mirror($hash->{custommirror});
+
+	if (Fink::Core::Util::boolean($hash->{updateconfigguess})) {
+		$self->config_guess_dir('.');
+	}
+	if (exists $hash->{updateconfigguessindirs} and defined $hash->{updateconfigguessindirs}) {
+		my $dirs = $hash->{updateconfigguessindirs};
+		my $current_dir = $self->config_guess_dir;
+		$self->config_guess_dir((defined $current_dir)? ($current_dir . ' ' . $dirs) : $dirs);
+	}
+
+	if (Fink::Core::Util::boolean($hash->{updatelibtool})) {
+		$self->libtool_dir('.');
+	}
+	if (exists $hash->{updatelibtoolindirs} and defined $hash->{updatelibtoolindirs}) {
+		my $dirs = $hash->{updatelibtoolindirs};
+		my $current_dir = $self->libtool_dir;
+		$self->libtool_dir((defined $current_dir)? ($current_dir . ' ' . $dirs) : $dirs);
+	}
+
+	if (Fink::Core::Util::boolean($hash->{updatelibtool})) {
+		$self->po_makefile_dir('po');
+	}
+
+	$self->update_pod(Fink::Core::Util::ternary($hash->{updatepod}));
+	$self->configure_params($hash->{configureparams});
+	$self->compile_script($hash->{compilescript});
+	$self->install_script($hash->{installscript});
+	$self->default_script($hash->{defaultscript});
+	$self->info_test($hash->{infotest});
+
+	# sourcefiles and stuff
+
+	return $self;
+}
+
+=back
 
 =head1 METHODS
 
@@ -162,6 +224,30 @@ sub configure_params {
 	my $self = shift;
 	if (@_) { $self->{CONFIGURE_PARAMS} = shift; }
 	return $self->{CONFIGURE_PARAMS};
+}
+
+=item compile_script
+
+The compilation script, if any.
+
+=cut
+
+sub compile_script {
+	my $self = shift;
+	if (@_) { $self->{COMPILE_SCRIPT} = shift; }
+	return $self->{COMPILE_SCRIPT};
+}
+
+=item install_script
+
+The compilation script, if any.
+
+=cut
+
+sub install_script {
+	my $self = shift;
+	if (@_) { $self->{INSTALL_SCRIPT} = shift; }
+	return $self->{INSTALL_SCRIPT};
 }
 
 =item default_script

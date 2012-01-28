@@ -5,12 +5,14 @@ use strict;
 use warnings;
 
 use Carp;
+use Data::Dumper;
+use Expect;
 use File::Basename;
 use File::Copy qw();
-use Expect;
 
-# hack!
-use Fink::Config qw($config);
+use Fink::Core::Dependency;
+use Fink::Core::OrSet;
+use Fink::Core::Util;
 use Fink::Core::Version;
 
 =head1 NAME
@@ -38,7 +40,9 @@ our $VERSION = '1.0';
 
 =head1 CONSTRUCTOR
 
-Fink::Core::Package::Base->new($name, $version)
+=over 2
+
+=item Fink::Core::Package::Base->new($name, $version)
 
 Given a name and Fink::Core::Version, create a new Fink::Core::Package::Base object.
 
@@ -53,8 +57,7 @@ sub new {
 	my $version = shift;
 
 	if (not defined $version) {
-		carp "You must provide a name and a Fink::Core::Version object!";
-		return undef;
+		croak "You must provide a name and a Fink::Core::Version object!";
 	}
 
 	$self->{NAME}    = $name;
@@ -62,6 +65,86 @@ sub new {
 
 	return bless($self, $class);
 }
+
+=item Fink::Core::Package::Base->new_from_hash($hash_ref)
+
+Given a properties-list-style hash (from PkgVersion), initialize a new Fink::Core::Package::Base package.
+
+=cut
+
+sub new_from_hash {
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
+
+	my $hash  = shift;
+
+	if (not defined $hash or not ref $hash) {
+		croak "No hash provided!";
+		return undef;
+	}
+
+	my $name    = $hash->{package};
+	my $version = Fink::Core::DebVersion->new($hash->{version}, $hash->{revision}, $hash->{epoch});
+
+	my $self    = $class->new($name, $version) or return undef;
+
+	$self->architecture($hash->{architecture});
+	$self->distribution($hash->{distribution});
+	$self->build_depends_only(Fink::Core::Util::ternary($hash->{builddependsonly}));
+	$self->essential(Fink::Core::Util::boolean($hash->{essential}));
+	$self->license($hash->{license});
+	$self->description($hash->{description});
+	$self->homepage($hash->{homepage});
+	$self->maintainer($hash->{maintainer});
+	
+	my $depends  = _parse_dependencies($hash->{depends});
+	$self->depends->add(@$depends);
+
+	my $provides = _parse_dependencies($hash->{provides});
+	$self->provides->add(@$provides);
+
+	my $build_depends = _parse_dependencies($hash->{builddepends});
+	$self->build_depends->add(@$build_depends);
+
+	my $conflicts = _parse_dependencies($hash->{conflicts});
+	$self->conflicts->add(@$conflicts);
+
+	my $replaces = _parse_dependencies($hash->{replaces});
+	$self->replaces->add(@$replaces);
+
+	return $self;
+}
+
+sub _parse_dependencies($) {
+	my $text = shift || return [];
+
+	my @return = ();
+
+	$text =~ s/[\s\n\r]+/ /g;
+	$text =~ s/^\s*(.*)\s*$/$1/;
+
+	my @chunks = split(/\s*,\s*/, $text);
+	for my $chunk (@chunks) {
+		$chunk =~ s/^\s*\(?\s*(.*)\s*\)?\s*$/$1/;
+
+		my @deps = split(/\s*\|\s*/, $chunk);
+		if (@deps > 1) {
+			my $set = Fink::Core::OrSet->new();
+
+			for my $dep (@deps) {
+				$set->add(Fink::Core::Dependency->new_from_string($dep));
+			}
+
+			push(@return, $set);
+		} else {
+			push(@return, Fink::Core::Dependency->new_from_string($chunk));
+		}
+	}
+
+	return \@return;
+}
+
+=back
 
 =head1 METHODS
 
@@ -137,6 +220,34 @@ sub essential {
 	return $self->{ESSENTIAL};
 }
 
+=item depends
+
+Set of Fink::Core::Dependency objects representing 0 or more things this package depends on.
+
+=cut
+
+sub depends {
+	my $self = shift;
+	if (not exists $self->{DEPENDS}) {
+		$self->{DEPENDS} = Fink::Core::Set->new();
+	}
+	return $self->{DEPENDS};
+}
+
+=item build_depends
+
+Set of Fink::Core::Dependency objects representing 0 or more things this package build-depends on.
+
+=cut
+
+sub build_depends {
+	my $self = shift;
+	if (not exists $self->{BUILD_DEPENDS}) {
+		$self->{BUILD_DEPENDS} = Fink::Core::Set->new();
+	}
+	return $self->{BUILD_DEPENDS};
+}
+
 =item provides
 
 Set of Fink::Core::Dependency objects representing 0 or more things this package provides.
@@ -149,6 +260,34 @@ sub provides {
 		$self->{PROVIDES} = Fink::Core::Set->new();
 	}
 	return $self->{PROVIDES};
+}
+
+=item conflicts
+
+Set of Fink::Core::Dependency objects representing 0 or more things this package conflicts with.
+
+=cut
+
+sub conflicts {
+	my $self = shift;
+	if (not exists $self->{CONFLICTS}) {
+		$self->{CONFLICTS} = Fink::Core::Set->new();
+	}
+	return $self->{CONFLICTS};
+}
+
+=item replaces
+
+Set of Fink::Core::Dependency objects representing 0 or more things this package replaces.
+
+=cut
+
+sub replaces {
+	my $self = shift;
+	if (not exists $self->{REPLACES}) {
+		$self->{REPLACES} = Fink::Core::Set->new();
+	}
+	return $self->{REPLACES};
 }
 
 =item license

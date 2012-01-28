@@ -195,6 +195,15 @@ our %shared_loads;
 
 		# Insert the loaded fields
 		my $href = $loaded->{$self->get_fullname};
+
+#		my $core_package = Fink::Core::Package::Info->new_from_hash($href);
+#
+#		print "=== core_package ===\n", Dumper($core_package), "\n";
+#		my $core_version = Fink::Core::DebVersion->new($href->{version}, $href->{revision}, $href->{epoch});
+#		my $core_package = Fink::Core::Package::Info->new($href->{package}, $core_version);
+#
+#		print "=== raw hash ===\n", Dumper($href), "\n";
+
 		my @load_keys = grep { !exists $dont_load{$_} } keys %$href;
 		@$self{@load_keys} = @$href{@load_keys};
 

@@ -45,7 +45,11 @@ sub add {
 		} else {
 			for my $required (@required) {
 				if (not $item->can($required)) {
-					croak "Attempted to add an item that does not answer to required method '->${required}'!";
+					my $desc = $item;
+					if ($item->can('to_string')) {
+						$desc = $item->to_string;
+					}
+					croak "Attempted to add an item ($desc) that does not answer to required method '->${required}'!";
 				}
 			}
 			push(@items, $item);

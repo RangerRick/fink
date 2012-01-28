@@ -51,8 +51,11 @@ perlmod/Fink/CLI.pm
 perlmod/Fink/Command.pm
 perlmod/Fink/Config.pm
 perlmod/Fink/Configure.pm
+perlmod/Fink/Core/AndSet.pm
 perlmod/Fink/Core/DebVersion.pm
+perlmod/Fink/Core/Dependency.pm
 perlmod/Fink/Core/File.pm
+perlmod/Fink/Core/OrSet.pm
 perlmod/Fink/Core/PackageSet.pm
 perlmod/Fink/Core/PatchFile.pm
 perlmod/Fink/Core/Set.pm
